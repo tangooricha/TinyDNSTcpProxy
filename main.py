@@ -32,11 +32,11 @@ class WorkerThread(threading.Thread):
 		for dnsSvr in dnsServers:
 			try:
 				self.dnsResponse = self.clientQuestionRecord.send(dnsSvr,tcp = True)
+				sockLock.acquire()
+				self.bindSock.sendto(self.dnsResponse, self.clientAddr)
+				sockLock.release()
 			except:
-				pass
-		sockLock.acquire()
-		self.bindSock.sendto(self.dnsResponse, self.clientAddr)
-		sockLock.release()
+				continue
 
 if __name__ == '__main__':
 	global sockLock
