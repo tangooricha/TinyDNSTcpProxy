@@ -1,24 +1,29 @@
 import dnslib
 import threading
 import socket
+import sys
 
 dnsServers = ["8.8.8.8"]
 
 class ServerThread(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
-		self.workerThreads = []
 	def run(self):
 		global sockLock
-		self.bindSock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-		self.bindSock.bind(("localhost", 53))
+		try:
+			self.bindSock = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+			self.bindSock.bind(("", 53))
+		except:
+			sys.exit()
 		while(True):
-			self.recvData, self.clientAddr = self.bindSock.recvfrom(65536)
-			sockLock.acquire()
-			curThread = WorkerThread(self.bindSock, self.clientAddr, self.recvData)
-			self.workerThreads.append(curThread)
-			curThread.start()
-			sockLock.release()
+			try:
+				self.recvData, self.clientAddr = self.bindSock.recvfrom(65536)
+				sockLock.acquire()
+				curThread = WorkerThread(self.bindSock, self.clientAddr, self.recvData)
+				curThread.start()
+				sockLock.release()
+			except:
+				pass
 
 class WorkerThread(threading.Thread):
 	def __init__(self, bindSock, clientAddr, recvData):
@@ -36,7 +41,7 @@ class WorkerThread(threading.Thread):
 				self.bindSock.sendto(self.dnsResponse, self.clientAddr)
 				sockLock.release()
 			except:
-				continue
+				pass
 
 if __name__ == '__main__':
 	global sockLock
